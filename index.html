@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Escolha 10 números</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      padding: 0;
+    }
+    .container {
+      max-width: 400px;
+      margin: 0 auto;
+    }
+    .number-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .number {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      background-color: #f0f0f0;
+      text-align: center;
+      line-height: 50px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .number.selected {
+      background-color: #4caf50;
+      color: white;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 15px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Escolha até 10 números</h2>
+    <input type="text" id="name" placeholder="Seu nome" style="width: 100%; margin-bottom: 15px;">
+    <div class="number-list" id="numberList"></div>
+    <button id="submitButton" disabled>Enviar</button>
+  </div>
+
+  <script>
+    const maxSelection = 10;
+    const numbers = Array.from({ length: 60 }, (_, i) => String(i + 1).padStart(2, '0'));
+    const numberList = document.getElementById('numberList');
+    const submitButton = document.getElementById('submitButton');
+    const nameInput = document.getElementById('name');
+    const selectedNumbers = new Set();
+
+    numbers.forEach(number => {
+      const div = document.createElement('div');
+      div.className = 'number';
+      div.textContent = number;
+      div.addEventListener('click', () => {
+        if (selectedNumbers.has(number)) {
+          selectedNumbers.delete(number);
+          div.classList.remove('selected');
+        } else if (selectedNumbers.size < maxSelection) {
+          selectedNumbers.add(number);
+          div.classList.add('selected');
+        }
+        submitButton.disabled = selectedNumbers.size === 0 || !nameInput.value.trim();
+      });
+      numberList.appendChild(div);
+    });
+
+    nameInput.addEventListener('input', () => {
+      submitButton.disabled = selectedNumbers.size === 0 || !nameInput.value.trim();
+    });
+
+    submitButton.addEventListener('click', () => {
+      const name = nameInput.value.trim();
+      if (!name) return alert('Por favor, insira seu nome.');
+      fetch('https://script.google.com/macros/s/AKfycbz_N3TfKMLDonBn1xqfLUdaCVMjnFkfc8GPPmXZxyAos_UcZkTYqRm7ciDeCXIZiLZ1/exec', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, selectedNumbers: Array.from(selectedNumbers) })
+      }).then(response => response.json())
+        .then(data => {
+          if (data.status === 'success') {
+            alert('Dados enviados com sucesso!');
+            selectedNumbers.clear();
+            document.querySelectorAll('.number').forEach(el => el.classList.remove('selected'));
+            nameInput.value = '';
+            submitButton.disabled = true;
+          } else {
+            alert('Erro ao enviar os dados.');
+          }
+        })
+        .catch(() => alert('Erro na conexão.'));
+    });
+  </script>
+</body>
+</html>
